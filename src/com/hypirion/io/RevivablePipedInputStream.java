@@ -62,6 +62,7 @@ import java.io.IOException;
 public class RevivablePipedInputStream extends PipedInputStream {
     boolean closedByWriter = false;
     volatile boolean closedByReader = false;
+    volatile boolean simulatedClose = false;
     boolean connected = false;
 
         /* REMIND: identification of the read and write sides needs to be
@@ -202,104 +203,6 @@ public class RevivablePipedInputStream extends PipedInputStream {
     }
 
     /**
-     * Receives a byte of data.  This method will block if no input is
-     * available.
-     * @param b the byte being received
-     * @exception IOException If the pipe is <a href=#BROKEN> <code>broken</code></a>,
-     *          {@link #connect(java.io.PipedOutputStream) unconnected},
-     *          closed, or if an I/O error occurs.
-     * @since     JDK1.1
-     */
-    protected synchronized void receive(int b) throws IOException {
-        checkStateForReceive();
-        writeSide = Thread.currentThread();
-        if (in == out)
-            awaitSpace();
-        if (in < 0) {
-            in = 0;
-            out = 0;
-        }
-        buffer[in++] = (byte)(b & 0xFF);
-        if (in >= buffer.length) {
-            in = 0;
-        }
-    }
-
-    /**
-     * Receives data into an array of bytes.  This method will
-     * block until some input is available.
-     * @param b the buffer into which the data is received
-     * @param off the start offset of the data
-     * @param len the maximum number of bytes received
-     * @exception IOException If the pipe is <a href=#BROKEN> broken</a>,
-     *           {@link #connect(java.io.PipedOutputStream) unconnected},
-     *           closed,or if an I/O error occurs.
-     */
-    synchronized void receive(byte b[], int off, int len)  throws IOException {
-        checkStateForReceive();
-        writeSide = Thread.currentThread();
-        int bytesToTransfer = len;
-        while (bytesToTransfer > 0) {
-            if (in == out)
-                awaitSpace();
-            int nextTransferAmount = 0;
-            if (out < in) {
-                nextTransferAmount = buffer.length - in;
-            } else if (in < out) {
-                if (in == -1) {
-                    in = out = 0;
-                    nextTransferAmount = buffer.length - in;
-                } else {
-                    nextTransferAmount = out - in;
-                }
-            }
-            if (nextTransferAmount > bytesToTransfer)
-                nextTransferAmount = bytesToTransfer;
-            assert(nextTransferAmount > 0);
-            System.arraycopy(b, off, buffer, in, nextTransferAmount);
-            bytesToTransfer -= nextTransferAmount;
-            off += nextTransferAmount;
-            in += nextTransferAmount;
-            if (in >= buffer.length) {
-                in = 0;
-            }
-        }
-    }
-
-    private void checkStateForReceive() throws IOException {
-        if (!connected) {
-            throw new IOException("Pipe not connected");
-        } else if (closedByWriter || closedByReader) {
-            throw new IOException("Pipe closed");
-        } else if (readSide != null && !readSide.isAlive()) {
-            throw new IOException("Read end dead");
-        }
-    }
-
-    private void awaitSpace() throws IOException {
-        while (in == out) {
-            checkStateForReceive();
-
-            /* full: kick any waiting readers */
-            notifyAll();
-            try {
-                wait(1000);
-            } catch (InterruptedException ex) {
-                throw new java.io.InterruptedIOException();
-            }
-        }
-    }
-
-    /**
-     * Notifies all waiting threads that the last byte of data has been
-     * received.
-     */
-    synchronized void receivedLast() {
-        closedByWriter = true;
-        notifyAll();
-    }
-
-    /**
      * Reads the next byte of data from this piped input stream. The
      * value byte is returned as an <code>int</code> in the range
      * <code>0</code> to <code>255</code>.
@@ -326,7 +229,7 @@ public class RevivablePipedInputStream extends PipedInputStream {
         readSide = Thread.currentThread();
         int trials = 2;
         while (in < 0) {
-            if (closedByWriter) {
+            if (closedByWriter || simulatedClose) {
                 /* closed by writer, return EOF */
                 return -1;
             }
@@ -386,6 +289,9 @@ public class RevivablePipedInputStream extends PipedInputStream {
             return 0;
         }
 
+        if (simulatedClose) {
+            return -1;
+        }
         /* possibly wait on the first character */
         int c = read();
         if (c < 0) {
@@ -437,7 +343,7 @@ public class RevivablePipedInputStream extends PipedInputStream {
      * @since   JDK1.0.2
      */
     public synchronized int available() throws IOException {
-        if(in < 0)
+        if (in < 0 || simulatedClose)
             return 0;
         else if(in == out)
             return buffer.length;
@@ -445,18 +351,5 @@ public class RevivablePipedInputStream extends PipedInputStream {
             return in - out;
         else
             return in + buffer.length - out;
-    }
-
-    /**
-     * Closes this piped input stream and releases any system resources
-     * associated with the stream.
-     *
-     * @exception  IOException  if an I/O error occurs.
-     */
-    public void close()  throws IOException {
-        closedByReader = true;
-        synchronized (this) {
-            in = -1;
-        }
     }
 }
