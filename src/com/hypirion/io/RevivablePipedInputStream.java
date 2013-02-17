@@ -352,4 +352,12 @@ public class RevivablePipedInputStream extends PipedInputStream {
         else
             return in + buffer.length - out;
     }
+
+    public void kill() {
+        simulatedClose = true;
+    }
+
+    public void revive() {
+        simulatedClose = false;
+    }
 }
