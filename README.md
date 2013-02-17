@@ -1,10 +1,16 @@
 # com.hypirion.io
 
-A Clojure library designed to ... well, that part is up to you.
+Java library which contain I/O classes for those with special needs.
 
 ## Usage
 
-FIXME
+Add a dependency to your this in your Clojure/Java/Scala app, and of we go.
+
+For Clojure, this can be done through
+
+```clj
+[com.hypirion.io "0.1.0-SNAPSHOT"]
+```
 
 ## License
 
