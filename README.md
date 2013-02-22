@@ -16,4 +16,4 @@ For Clojure, this can be done through
 
 Copyright © 2013 Jean Niklas L'orange
 
-Distributed under the GNU General Public License, Version 2.
+Distributed under the Eclipse Public License, the same as Clojure.
