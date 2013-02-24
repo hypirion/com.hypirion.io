@@ -4,10 +4,12 @@ import java.io.InputStream;
 import java.io.IOException;
 
 public class RevivableInputStream extends InputStream {
+    protected boolean killed;
     protected InputStream in;
 
     public RevivableInputStream(InputStream in) {
         this.in = in;
+        killed = false;
     }
 
     public int available() throws IOException {
@@ -23,15 +25,24 @@ public class RevivableInputStream extends InputStream {
     }
 
     public int read() throws IOException {
-        return in.read();
+        if (killed)
+            return -1;
+        else
+            return in.read();
     }
 
     public int read(byte[] b) throws IOException {
-        return in.read(b);
+        if (killed)
+            return -1;
+        else
+            return in.read(b);
     }
 
     public int read(byte[] b, int off, int len) throws IOException {
-        return in.read(b, off, len);
+        if (killed)
+            return -1;
+        else
+            return in.read(b, off, len);
     }
 
     public void reset() throws IOException {
@@ -40,5 +51,13 @@ public class RevivableInputStream extends InputStream {
 
     public long skip(long n) throws IOException {
         return in.skip(n);
+    }
+
+    public void kill() {
+        killed = true;
+    }
+
+    public void ressurect() {
+        killed = false;
     }
 }
