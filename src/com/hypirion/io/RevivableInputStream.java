@@ -71,8 +71,11 @@ public class RevivableInputStream extends InputStream {
         in.reset();
     }
 
-    public long skip(long n) throws IOException {
-        return in.skip(n);
+    public synchronized long skip(long n) throws IOException {
+        synchronized (lock) {
+            while (n --> 0)
+                read();
+        }
     }
 
     public void kill() {
