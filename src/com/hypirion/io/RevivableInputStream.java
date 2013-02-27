@@ -56,41 +56,15 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized int read(byte[] b) throws IOException {
-        synchronized (lock) {
-            if (killed || streamClosed)
-                return -1;
-            try {
-                lock.wait();
-            }
-            catch (InterruptedException ie) {
-                throw new InterruptedIOException();
-            }
-            if (killed || streamClosed || data == -1)
-                return -1;
-            b[0] = data;
-            // Some startup of the reader here
-            return 1;
-        }
+        return read(b, 0, b.length);
     }
 
     public synchronized int read(byte[] b, int off, int len) throws IOException{
-        synchronized (lock) {
-            if (killed || streamClosed)
-                return -1;
-            try {
-                lock.wait();
-            }
-            catch (InterruptedException ie) {
-                throw new InterruptedIOException();
-            }
-            if (killed || streamClosed || data == -1)
-                return -1;
-            if (len == 0)
-                return 0;
-            b[off] = data;
-            // Some startup of the reader here
-            return 1;
-        }
+        int v = read();
+        if (v == -1)
+            return -1;
+        b[off] = (byte) v;
+        return 1;
     }
 
     public void reset() throws IOException {
