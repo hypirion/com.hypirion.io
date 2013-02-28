@@ -60,6 +60,8 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized int read(byte[] b, int off, int len) throws IOException{
+        if (len == 0)
+            return 0;
         int v = read();
         if (v == -1)
             return -1;
