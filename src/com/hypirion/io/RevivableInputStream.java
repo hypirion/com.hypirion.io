@@ -11,6 +11,8 @@ public class RevivableInputStream extends InputStream {
     protected volatile boolean streamClosed;
     protected volatile int data;
     protected volatile Boolean beenRead;
+    protected volatile boolean threadCrashed;
+    protected volatile IOException threadException;
 
     protected final ThreadReader reader;
     protected final Thread readerThread;
@@ -20,6 +22,8 @@ public class RevivableInputStream extends InputStream {
         killed = false;
         streamClosed = false;
         beenRead = true;
+        threadCrashed = false;
+        threadException = null;
         data = -2;
         reader = new ThreadReader();
         readerThread = new Thread(reader);
@@ -43,13 +47,15 @@ public class RevivableInputStream extends InputStream {
     public synchronized int read() throws IOException {
         synchronized (beenRead) {
             try {
-                while (beenRead || !killed || !streamClosed) {
+                while (beenRead || !killed || !streamClosed || threadCrashed) {
                     beenRead.wait();
                 }
             }
             catch (InterruptedException ie) {
                 throw new InterruptedIOException();
             }
+            if (threadCrashed)
+                throw threadException;
             if (killed || streamClosed)
                 return -1;
             int val = data;
@@ -110,8 +116,11 @@ public class RevivableInputStream extends InputStream {
                     }
                 }
                 catch (IOException ioe) {
-                    // TODO: Pass exception to main thread.
-                    return;
+                    synchronized (beenRead) {
+                        threadCrashed = true;
+                        threadException = ioe; // TODO: Proper wrapping here.
+                        return;
+                    }
                 }
 
                 synchronized (beenRead) {
@@ -123,7 +132,9 @@ public class RevivableInputStream extends InputStream {
                         }
                     }
                     catch (InterruptedException ie) {
-                        // TODO: Pass exception to main thread.
+                        threadCrashed = true;
+                        threadException = new InterruptedIOException();
+                        // TODO: Use "real"  exception
                         return;
                     }
                 }
