@@ -101,7 +101,13 @@ public class RevivableInputStream extends InputStream {
             while (true) {
                 try {
                     data = in.read();
-                    // TODO: Handle -1 properly.
+                    if (data == -1){
+                        synchronized (beenRead){
+                            streamClosed = true;
+                            beenRead.notifyAll();
+                            return;
+                        }
+                    }
                 }
                 catch (IOException ioe) {
                     // TODO: Pass exception to main thread.
