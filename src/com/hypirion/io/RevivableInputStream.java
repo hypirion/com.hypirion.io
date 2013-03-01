@@ -5,24 +5,27 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 
 public class RevivableInputStream extends InputStream {
-    protected boolean killed;
     protected InputStream in;
 
-    protected boolean streamClosed;
-    protected byte data;
-    protected volatile boolean newData;
+    protected volatile boolean killed;
+    protected volatile boolean streamClosed;
+    protected volatile int data;
+    protected volatile Boolean beenRead;
 
-    protected final Object lock;
-    protected final RevivableReader reader;
+    protected final ThreadReader reader;
+    protected final Thread readerThread;
 
-    public RevivableInputStream(InputStream in) {
+    public RevivableInputStream(InputStream in) throws InterruptedException {
         this.in = in;
         killed = false;
         streamClosed = false;
-        newData = false;
-        lock = new Object();
-        reader = new RevivableReader(this);
-        // Fire up new thread around here.
+        beenRead = true;
+        data = -2;
+        reader = new ThreadReader();
+        readerThread = new Thread(reader);
+        readerThread.setDaemon(true);
+        readerThread.setName("RevivableReader " + in.hashCode());
+        readerThread.start();
     }
 
     public int available() throws IOException {
@@ -38,11 +41,11 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized int read() throws IOException {
-        synchronized (lock) {
-            if (killed || streamClosed)
-                return -1;
+        synchronized (beenRead) {
             try {
-                lock.wait();
+                while (beenRead || !killed || !streamClosed) {
+                    beenRead.wait();
+                }
             }
             catch (InterruptedException ie) {
                 throw new InterruptedIOException();
@@ -50,8 +53,10 @@ public class RevivableInputStream extends InputStream {
             if (killed || streamClosed)
                 return -1;
             int val = data;
-            // Some startup of the reader here
-            return data;
+
+            beenRead = true;
+            beenRead.notifyAll();
+            return val;
         }
     }
 
@@ -74,16 +79,15 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized long skip(long n) throws IOException {
-        synchronized (lock) {
-            while (n --> 0)
-                read();
-        }
+        while (n --> 0)
+            read();
+        return -1; // TODO: Read what we should return.
     }
 
     public void kill() {
-        synchronized (lock) {
+        synchronized (beenRead) {
             killed = true;
-            lock.notifyAll();
+            beenRead.notifyAll();
         }
     }
 
@@ -91,14 +95,34 @@ public class RevivableInputStream extends InputStream {
         killed = false;
     }
 
-    private class RevivableReader implements Runnable {
-        public RevivableReader(RevivableInputStream ris) {
-            // Do some magic here
-        }
-
+    private class ThreadReader implements Runnable {
         @Override
         public void run() {
-            // And here. obviously.
+            while (true) {
+                try {
+                    data = in.read();
+                    // TODO: Handle -1 properly.
+                }
+                catch (IOException ioe) {
+                    // TODO: Pass exception to main thread.
+                    return;
+                }
+
+                synchronized (beenRead) {
+                    beenRead = false;
+                    beenRead.notifyAll();
+                    try {
+                        while (!beenRead) {
+                            beenRead.wait();
+                        }
+                    }
+                    catch (InterruptedException ie) {
+                        // TODO: Pass exception to main thread.
+                        return;
+                    }
+                }
+                // Data has been read, new iteration.
+            }
         }
     }
 }
