@@ -10,7 +10,8 @@ public class RevivableInputStream extends InputStream {
     protected volatile boolean killed;
     protected volatile boolean streamClosed;
     protected volatile int data;
-    protected volatile Boolean beenRead;
+    protected volatile boolean beenRead;
+    protected Object dataLock;
     protected volatile boolean threadCrashed;
     protected volatile IOException threadException;
 
@@ -22,6 +23,7 @@ public class RevivableInputStream extends InputStream {
         killed = false;
         streamClosed = false;
         beenRead = true;
+        dataLock = new Object();
         threadCrashed = false;
         threadException = null;
         data = -2;
@@ -45,10 +47,10 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized int read() throws IOException {
-        synchronized (beenRead) {
+        synchronized (dataLock) {
             try {
                 while (beenRead || !killed || !streamClosed || threadCrashed) {
-                    beenRead.wait();
+                    dataLock.wait();
                 }
             }
             catch (InterruptedException ie) {
@@ -61,7 +63,7 @@ public class RevivableInputStream extends InputStream {
             int val = data;
 
             beenRead = true;
-            beenRead.notifyAll();
+            dataLock.notifyAll();
             return val;
         }
     }
@@ -91,9 +93,9 @@ public class RevivableInputStream extends InputStream {
     }
 
     public void kill() {
-        synchronized (beenRead) {
+        synchronized (dataLock) {
             killed = true;
-            beenRead.notifyAll();
+            dataLock.notifyAll();
         }
     }
 
@@ -108,27 +110,27 @@ public class RevivableInputStream extends InputStream {
                 try {
                     data = in.read();
                     if (data == -1){
-                        synchronized (beenRead){
+                        synchronized (dataLock){
                             streamClosed = true;
-                            beenRead.notifyAll();
+                            dataLock.notifyAll();
                             return;
                         }
                     }
                 }
                 catch (IOException ioe) {
-                    synchronized (beenRead) {
+                    synchronized (dataLock) {
                         threadCrashed = true;
                         threadException = ioe; // TODO: Proper wrapping here.
                         return;
                     }
                 }
 
-                synchronized (beenRead) {
+                synchronized (dataLock) {
                     beenRead = false;
-                    beenRead.notifyAll();
+                    dataLock.notifyAll();
                     try {
                         while (!beenRead) {
-                            beenRead.wait();
+                            dataLock.wait();
                         }
                     }
                     catch (InterruptedException ie) {
