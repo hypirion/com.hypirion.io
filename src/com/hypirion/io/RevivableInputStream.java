@@ -64,7 +64,6 @@ public class RevivableInputStream extends InputStream {
             if (killed || streamClosed)
                 return -1;
             int val = data;
-
             beenRead = true;
             dataLock.notifyAll();
             return val;
@@ -85,8 +84,8 @@ public class RevivableInputStream extends InputStream {
         return 1;
     }
 
-    public void reset() throws IOException {
-        in.reset();
+    public synchronized void reset() throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     public synchronized long skip(long n) throws IOException {
