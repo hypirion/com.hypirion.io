@@ -34,8 +34,8 @@ public class RevivableInputStream extends InputStream {
         readerThread.start();
     }
 
-    public int available() throws IOException {
-        return in.available();
+    public synchronized int available() throws IOException {
+        return 0;
     }
 
     public void close() throws IOException {
