@@ -55,9 +55,11 @@ public class RevivableInputStream extends InputStream {
             catch (InterruptedException ie) {
                 throw new InterruptedIOException();
             }
+            if (streamClosed)
+                return -1;
             if (threadCrashed)
                 throw threadException;
-            if (killed || streamClosed)
+            if (killed)
                 return -1;
             int val = data;
             beenRead = true;
