@@ -102,7 +102,7 @@ public class RevivableInputStream extends InputStream {
         }
     }
 
-    public synchronized void ressurect() {
+    public synchronized void resurrect() {
         killed = false;
     }
 
