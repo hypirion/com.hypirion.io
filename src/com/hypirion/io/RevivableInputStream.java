@@ -49,7 +49,7 @@ public class RevivableInputStream extends InputStream {
     public synchronized int read() throws IOException {
         synchronized (dataLock) {
             try {
-                while (beenRead || !killed || !streamClosed || threadCrashed) {
+                while (beenRead && !killed && !streamClosed && !threadCrashed) {
                     dataLock.wait();
                 }
             }
