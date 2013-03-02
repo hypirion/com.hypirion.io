@@ -39,7 +39,7 @@ public class RevivableInputStream extends InputStream {
     private volatile boolean streamClosed;
     private volatile int data;
     private volatile boolean beenRead;
-    private Object dataLock;
+    private final Object dataLock;
     private volatile boolean threadCrashed;
     private volatile IOException threadException;
 
