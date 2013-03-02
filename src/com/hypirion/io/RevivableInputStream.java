@@ -45,8 +45,8 @@ public class RevivableInputStream extends InputStream {
         }
     }
 
-    public boolean markSupported() {
-        return in.markSupported();
+    public synchronized boolean markSupported() {
+        return false;
     }
 
     public synchronized int read() throws IOException {
