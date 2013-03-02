@@ -38,8 +38,11 @@ public class RevivableInputStream extends InputStream {
         return 0;
     }
 
-    public void close() throws IOException {
-        in.close();
+    public synchronized void close() throws IOException {
+        synchronized (dataLock) {
+            in.close();
+            dataLock.notifyAll();
+        }
     }
 
     public boolean markSupported() {
