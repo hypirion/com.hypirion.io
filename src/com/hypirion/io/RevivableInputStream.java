@@ -90,9 +90,9 @@ public class RevivableInputStream extends InputStream {
     }
 
     public synchronized long skip(long n) throws IOException {
-        while (n --> 0)
+        for (int i = 0; i < n; i++)
             read();
-        return -1; // TODO: Read what we should return.
+        return n;
     }
 
     public void kill() {
