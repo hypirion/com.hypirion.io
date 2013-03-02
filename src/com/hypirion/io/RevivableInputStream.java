@@ -68,30 +68,6 @@ public class RevivableInputStream extends InputStream {
         }
     }
 
-    public synchronized int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
-    }
-
-    public synchronized int read(byte[] b, int off, int len) throws IOException{
-        if (len == 0)
-            return 0;
-        int v = read();
-        if (v == -1)
-            return -1;
-        b[off] = (byte) v;
-        return 1;
-    }
-
-    public synchronized void reset() throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    public synchronized long skip(long n) throws IOException {
-        for (int i = 0; i < n; i++)
-            read();
-        return n;
-    }
-
     public void kill() {
         synchronized (dataLock) {
             killed = true;
