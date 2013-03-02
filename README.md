@@ -4,12 +4,12 @@ Java library which contain I/O classes for those with special needs.
 
 ## Usage
 
-Add a dependency to your this in your Clojure/Java/Scala app, and of we go.
+Add a dependency to your this in your Clojure/Java/Scala app, and off we go.
 
 For Clojure, this can be done through
 
 ```clj
-[com.hypirion.io "0.1.0-SNAPSHOT"]
+[com.hypirion.io "0.1.0"]
 ```
 
 ## License
