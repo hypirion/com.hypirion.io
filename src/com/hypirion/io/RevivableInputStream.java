@@ -45,10 +45,6 @@ public class RevivableInputStream extends InputStream {
         }
     }
 
-    public synchronized boolean markSupported() {
-        return false;
-    }
-
     public synchronized int read() throws IOException {
         synchronized (dataLock) {
             try {
