@@ -1,6 +1,7 @@
 # com.hypirion.io
 
-Java library which contain I/O classes for those with special needs.
+Java library which contain I/O classes for those with special needs. For the API
+documentation, see <http://hypirion.github.com/com.hypirion.io/>.
 
 ## Usage
 
