@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.io.Console;
 import java.lang.reflect.Field;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import sun.nio.cs.StreamDecoder;
+import java.nio.charset.Charset;
 
 public final class ConsoleUtils {
 
@@ -16,7 +18,9 @@ public final class ConsoleUtils {
     }
     
     public static void rebindConsoleReader(InputStream is)
-        throws NoSuchFieldException, ClassNotFoundException {
+        throws NoSuchFieldException, ClassNotFoundException,
+               IllegalAccessException, InstantiationException,
+               InvocationTargetException {
         Console console = System.console();
         Class c = console.getClass();
         Field readLock = getPrivateField(c, "readLock"),
@@ -26,7 +30,7 @@ public final class ConsoleUtils {
         Constructor[] ctors = rdr.getDeclaredConstructors();
         Object streamDecoder =
             StreamDecoder.forInputStreamReader(is, readLock.get(console),
-                                               charset.get(console)),
+                                               (Charset) charset.get(console)),
             newReader = ctors[0].newInstance(console, streamDecoder);
         reader.set(console, newReader);
     }
