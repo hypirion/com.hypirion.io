@@ -63,6 +63,8 @@ public class Pipe {
                     // release the lock
                 }
             }
+        } else if (block) {
+            join();
         }
     }
 
