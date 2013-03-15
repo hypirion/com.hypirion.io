@@ -2,6 +2,7 @@ package com.hypirion.io;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.IOException;
 
 public class Pipe {
 
@@ -93,23 +94,35 @@ public class Pipe {
 
         @Override
         public void run() {
-            outer:
-            while (true) {
-                synchronized (lock) {
-                    while (!currentlyRunning) {
-                        if (stopped) {
-                            break outer;
+            try {
+                outer:
+                while (true) {
+                    synchronized (lock) {
+                        while (!currentlyRunning) {
+                            if (stopped) {
+                                break outer;
+                            }
+                            lock.wait();
+                            lock.notify();
                         }
-                        lock.wait();
-                        lock.notify();
                     }
+                    int count = in.read(data);
+                    if (count < 0) {
+                        break;
+                    }
+                    out.write(data, 0, count);
                 }
-                int count = in.read(data);
-                if (count < 0) {
+            }
+            catch (Exception e) {
+                // Die silently for now.
+            }
+            finally {
+                try {
                     out.close();
-                    break;
                 }
-                out.write(data, 0, count);
+                catch (IOException ioe) {
+                    ioe.printStackTrace(); // Well yeah
+                }
             }
         }
     }
