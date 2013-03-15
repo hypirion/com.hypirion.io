@@ -2,6 +2,7 @@ package com.hypirion.io;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
 
 public class Pipe {
 
@@ -12,7 +13,8 @@ public class Pipe {
     private final InputStream in;
     private final OutputStream out;
     private final int bufsize;
-    private final Object dataLock;
+    private final Object lock;
+    private volatile boolean currentlyRunning;
 
     public Pipe(InputStream in, OutputStream out) {
         this(in, out, DEFAULT_BUFFER_SIZE);
@@ -27,15 +29,20 @@ public class Pipe {
         threadPumper.setName(String.format("PipeThread %s %s", in.hashCode(),
                                            out.hashCode()));
         threadPumper.setDaemon(true);
-        dataLock = new Object();
+        threadPumper.start();
+        lock = new Object();
+        currentlyRunning = false;
     }
 
     public void join() throws InterruptedException {
         threadPumper.join();
     }
 
-    public void start() {
-
+    public synchronized void start() {
+        synchronized (lock) {
+            currentlyRunning = true;
+            lock.notify(); // Wake up the pumper if it's waiting.
+        }
     }
 
     public void stop() {
@@ -56,14 +63,17 @@ public class Pipe {
         @Override
         public void run() {
             while (true) {
-                synchronized (dataLock) {
-                    int count = in.read(data);
-                    if (count < 0) {
-                        out.close();
-                        break;
+                synchronized (lock) {
+                    while (!currentlyRunning) {
+                        lock.wait();
                     }
-                    out.write(data, 0, count);
                 }
+                int count = in.read(data);
+                if (count < 0) {
+                    out.close();
+                    break;
+                }
+                out.write(data, 0, count);
             }
         }
     }
