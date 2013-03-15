@@ -9,6 +9,7 @@ public class Pipe {
     private final PipeThread pt;
     private final InputStream in;
     private final OutputStream out;
+    private final Object readLock, writeLock;
 
     public Pipe(InputStream in, OutputStream out) {
         this.in = in;
@@ -18,6 +19,8 @@ public class Pipe {
         threadPumper.setName(String.format("PipeThread %s %s", in.hashCode(),
                                            out.hashCode()));
         threadPumper.setDaemon(true);
+        readLock = new Object();
+        writeLock = new Object();
     }
 
     public void join() throws InterruptedException {
@@ -33,7 +36,7 @@ public class Pipe {
     }
 
     public void stop(boolean block) {
-
+        
     }
 
     private class PipeThread implements Runnable {
