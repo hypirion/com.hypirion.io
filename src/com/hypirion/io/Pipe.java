@@ -14,7 +14,7 @@ public class Pipe {
     private final OutputStream out;
     private final int bufsize;
     private final Object lock;
-    private volatile boolean currentlyRunning;
+    private volatile boolean currentlyRunning, stopped;
 
     public Pipe(InputStream in, OutputStream out) {
         this(in, out, DEFAULT_BUFFER_SIZE);
@@ -32,6 +32,7 @@ public class Pipe {
         threadPumper.start();
         lock = new Object();
         currentlyRunning = false;
+        stopped = false;
     }
 
     public void join() throws InterruptedException {
@@ -45,12 +46,19 @@ public class Pipe {
         }
     }
 
-    public void stop() {
+    public synchronized void stop() throws InterruptedException {
         stop(true);
     }
 
-    public void stop(boolean block) {
-        
+    public synchronized void stop(boolean block) throws InterruptedException {
+        synchronized (lock) {
+            currentlyRunning = false;
+            stopped = true;
+            lock.notify();
+        }
+        if (block) {
+            join();
+        }
     }
 
     private class PipeThread implements Runnable {
@@ -62,9 +70,13 @@ public class Pipe {
 
         @Override
         public void run() {
+            outer:
             while (true) {
                 synchronized (lock) {
                     while (!currentlyRunning) {
+                        if (stopped) {
+                            break outer;
+                        }
                         lock.wait();
                     }
                 }
