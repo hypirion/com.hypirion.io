@@ -46,6 +46,22 @@ public class Pipe {
         }
     }
 
+    public synchronized void pause() throws InterruptedException {
+        pause(true);
+    }
+
+    public synchronized void pause(boolean block) throws InterruptedException {
+        synchronized (lock) {
+            currentlyRunning = false;
+            lock.notify();
+            if (block) {
+                lock.wait();
+                // Wait for signal from pumper, which will start after we
+                // release the lock
+            }
+        }
+    }
+
     public synchronized void stop() throws InterruptedException {
         stop(true);
     }
