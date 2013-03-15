@@ -8,11 +8,9 @@ public class Pipe {
 
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
-    private final Thread threadPumper;
-    private final PipeThread pt;
+    private final Thread pumper;
     private final InputStream in;
     private final OutputStream out;
-    private final int bufsize;
     private final Object lock;
     private volatile boolean currentlyRunning, stopped;
 
@@ -23,20 +21,19 @@ public class Pipe {
     public Pipe(InputStream in, OutputStream out, int bufsize) {
         this.in = in;
         this.out = out;
-        this.bufsize = bufsize;
-        pt = new PipeThread();
-        threadPumper = new Thread(pt);
-        threadPumper.setName(String.format("PipeThread %s %s", in.hashCode(),
+        Runnable pt = new PipeOutputStream(bufsize);
+        pumper = new Thread(pt);
+        pumper.setName(String.format("PipeThread %s %s", in.hashCode(),
                                            out.hashCode()));
-        threadPumper.setDaemon(true);
-        threadPumper.start();
+        pumper.setDaemon(true);
+        pumper.start();
         lock = new Object();
         currentlyRunning = false;
         stopped = false;
     }
 
     public void join() throws InterruptedException {
-        threadPumper.join();
+        pumper.join();
     }
 
     public synchronized void start() {
@@ -85,10 +82,10 @@ public class Pipe {
         }
     }
 
-    private class PipeThread implements Runnable {
+    private class PipeOutputStream implements Runnable {
         private final byte[] data;
 
-        public PipeThread() {
+        public PipeOutputStream(int bufsize) {
             data = new byte[bufsize];
         }
 
