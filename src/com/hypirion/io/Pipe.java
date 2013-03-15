@@ -11,8 +11,8 @@ public class Pipe {
     private final PipeThread pt;
     private final InputStream in;
     private final OutputStream out;
-    private final byte[] data;
-    private final Object readLock, writeLock;
+    private final int bufsize;
+    private final Object dataLock;
 
     public Pipe(InputStream in, OutputStream out) {
         this(in, out, DEFAULT_BUFFER_SIZE);
@@ -21,14 +21,13 @@ public class Pipe {
     public Pipe(InputStream in, OutputStream out, int bufsize) {
         this.in = in;
         this.out = out;
-        data = new byte[bufsize];
+        this.bufsize = bufsize;
         pt = new PipeThread();
         threadPumper = new Thread(pt);
         threadPumper.setName(String.format("PipeThread %s %s", in.hashCode(),
                                            out.hashCode()));
         threadPumper.setDaemon(true);
-        readLock = new Object();
-        writeLock = new Object();
+        dataLock = new Object();
     }
 
     public void join() throws InterruptedException {
@@ -48,10 +47,23 @@ public class Pipe {
     }
 
     private class PipeThread implements Runnable {
+        private final byte[] data;
+
+        public PipeThread() {
+            data = new byte[bufsize];
+        }
+
         @Override
         public void run() {
             while (true) {
-                
+                synchronized (dataLock) {
+                    int count = in.read(data);
+                    if (count < 0) {
+                        out.close();
+                        break;
+                    }
+                    out.write(data, 0, count);
+                }
             }
         }
     }
