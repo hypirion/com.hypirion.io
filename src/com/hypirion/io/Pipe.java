@@ -40,9 +40,11 @@ public class Pipe {
     }
 
     public synchronized void start() {
-        synchronized (lock) {
-            currentlyRunning = true;
-            lock.notify(); // Wake up the pumper if it's waiting.
+        if (!stopped) {
+            synchronized (lock) {
+                currentlyRunning = true;
+                lock.notify(); // Wake up the pumper if it's waiting.
+            }
         }
     }
 
@@ -51,13 +53,15 @@ public class Pipe {
     }
 
     public synchronized void pause(boolean block) throws InterruptedException {
-        synchronized (lock) {
-            currentlyRunning = false;
-            lock.notify();
-            if (block) {
-                lock.wait();
-                // Wait for signal from pumper, which will start after we
-                // release the lock
+        if (!stopped) {
+            synchronized (lock) {
+                currentlyRunning = false;
+                lock.notify();
+                if (block) {
+                    lock.wait();
+                    // Wait for signal from pumper, which will start after we
+                    // release the lock
+                }
             }
         }
     }
@@ -67,10 +71,12 @@ public class Pipe {
     }
 
     public synchronized void stop(boolean block) throws InterruptedException {
-        synchronized (lock) {
-            currentlyRunning = false;
-            stopped = true;
-            lock.notify();
+        if (!stopped) {
+            synchronized (lock) {
+                currentlyRunning = false;
+                stopped = true;
+                lock.notify();
+            }
         }
         if (block) {
             join();
@@ -94,6 +100,7 @@ public class Pipe {
                             break outer;
                         }
                         lock.wait();
+                        lock.notify();
                     }
                 }
                 int count = in.read(data);
