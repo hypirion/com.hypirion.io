@@ -129,14 +129,6 @@ public class Pipe {
             catch (Exception e) {
                 // Die silently for now.
             }
-            finally {
-                try {
-                    out.close();
-                }
-                catch (IOException ioe) {
-                    ioe.printStackTrace(); // Well yeah
-                }
-            }
         }
     }
 
@@ -174,14 +166,6 @@ public class Pipe {
             }
             catch (Exception e) {
                 // Die silently for now.
-            }
-            finally {
-                try {
-                    out.close();
-                }
-                catch (IOException ioe) {
-                    ioe.printStackTrace(); // Well yeah
-                }
             }
         }
     }
