@@ -10,7 +10,7 @@ Add a dependency to your this in your Clojure/Java/Scala app, and off we go.
 For Clojure, this can be done through
 
 ```clj
-[com.hypirion.io "0.1.0"]
+[com.hypirion.io "0.2.0-RC1"]
 ```
 
 ## License
