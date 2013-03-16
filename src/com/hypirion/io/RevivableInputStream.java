@@ -66,6 +66,11 @@ public class RevivableInputStream extends InputStream {
         readerThread.setDaemon(true);
         readerThread.setName("RevivableReader " + in.hashCode());
         readerThread.start();
+        while (requestData) {
+            Thread.yield();
+            // ensure no deadlock by waiting for the reader to get into its
+            // correct state
+        }
     }
 
     /**
