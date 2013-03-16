@@ -124,6 +124,7 @@ public class Pipe {
                         break;
                     }
                     out.write(data, 0, count);
+                    out.flush();
                 }
             }
             catch (Exception e) {
@@ -162,6 +163,7 @@ public class Pipe {
                         break;
                     }
                     out.write(data, 0, count);
+                    out.flush();
                 }
             }
             catch (Exception e) {
