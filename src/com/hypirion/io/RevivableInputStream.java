@@ -129,6 +129,17 @@ public class RevivableInputStream extends InputStream {
         }
     }
 
+    public synchronized int read(byte[] b, int off, int len)
+        throws IOException {
+        if (b.length - off < 0 || len == 0)
+            return 0;
+        int v = read();
+        if (v < 0)
+            return -1;
+        b[off] = (byte) v;
+        return 1;
+    }
+
     /**
      * Kills this revivable input stream. Makes current and future read calls
      * immediately return -1. The input stream may be revived through
