@@ -37,8 +37,9 @@ public class RevivableInputStream extends InputStream {
 
     private volatile boolean killed;
     private volatile boolean streamClosed;
-    private volatile int data;
-    private volatile boolean beenRead;
+    private volatile int requestedBytes;
+    private volatile byte[] data;
+    private volatile boolean requestData;
     private final Object dataLock;
     private volatile boolean threadCrashed;
     private volatile IOException threadException;
@@ -54,11 +55,12 @@ public class RevivableInputStream extends InputStream {
         this.in = in;
         killed = false;
         streamClosed = false;
-        beenRead = true;
+        requestData = true;
         dataLock = new Object();
         threadCrashed = false;
         threadException = null;
-        data = -2;
+        requestedBytes = -1;
+        data = null;
         reader = new ThreadReader();
         readerThread = new Thread(reader);
         readerThread.setDaemon(true);
@@ -107,9 +109,29 @@ public class RevivableInputStream extends InputStream {
      * be thrown every time read is called until the stream is closed.
      */
     public synchronized int read() throws IOException {
+        byte[] b = new byte[1];
+        int count = 0;
+        do {
+            count = read(b);
+        } while (count == 0);
+        if (count == -1){
+            return -1;
+        }
+        else {
+            return b[0];
+        }
+    }
+
+    public synchronized int read(byte[] b, int off, int len)
+        throws IOException {
         synchronized (dataLock) {
+            if (data == null) {
+                requestedBytes = len;
+                requestData = true;
+                dataLock.notifyAll();
+            }
             try {
-                while (beenRead && !killed && !streamClosed && !threadCrashed) {
+                while (data == null && !killed && !streamClosed && !threadCrashed) {
                     dataLock.wait();
                 }
             }
@@ -122,22 +144,36 @@ public class RevivableInputStream extends InputStream {
                 throw threadException;
             if (killed)
                 return -1;
-            int val = data;
-            beenRead = true;
-            dataLock.notifyAll();
-            return val;
-        }
-    }
+            // data must be non-null here due to dataLock's critical section.
+            int n = data.length;
+            if (n < len) {
+                int totRead = n;
+                System.arraycopy(data, 0, b, off, n);
+                data = null;
 
-    public synchronized int read(byte[] b, int off, int len)
-        throws IOException {
-        if (b.length - off < 0 || len == 0)
-            return 0;
-        int v = read();
-        if (v < 0)
-            return -1;
-        b[off] = (byte) v;
-        return 1;
+                // In case we can read additional data without blocking
+                int additional = Math.min(in.available(), len - n);
+                if (additional > 0) {
+                    additional = in.read(b, off + n, additional);
+                    // ^ sanity check
+                }
+                totRead += additional;
+                return totRead;
+            }
+            else if (n > len) {
+                System.arraycopy(data, 0, b, off, len);
+                int diff = n - len;
+                byte[] newData = new byte[diff];
+                System.arraycopy(data, len, newData, 0, diff);
+                data = newData;
+                return len;
+            }
+            else { // here n == len
+                System.arraycopy(data, 0, b, off, len);
+                data = null;
+                return len;
+            }
+        }
     }
 
     /**
@@ -170,29 +206,11 @@ public class RevivableInputStream extends InputStream {
         @Override
         public void run() {
             while (true) {
-                try {
-                    data = in.read();
-                    if (data == -1){
-                        synchronized (dataLock){
-                            streamClosed = true;
-                            dataLock.notifyAll();
-                            return;
-                        }
-                    }
-                }
-                catch (IOException ioe) {
-                    synchronized (dataLock) {
-                        threadCrashed = true;
-                        threadException = ioe; // TODO: Proper wrapping here.
-                        return;
-                    }
-                }
-
                 synchronized (dataLock) {
-                    beenRead = false;
+                    requestData = false;
                     dataLock.notifyAll();
                     try {
-                        while (!beenRead) {
+                        while (!requestData) {
                             dataLock.wait();
                         }
                     }
@@ -203,7 +221,31 @@ public class RevivableInputStream extends InputStream {
                         return;
                     }
                 }
-                // Data has been read, new iteration.
+                // Data has been requested, create new array with data.
+                try {
+                    byte[] buffer = new byte[requestedBytes];
+                    int actualBytes = in.read(buffer); // <-- actual reading
+
+                    if (actualBytes == -1){
+                        synchronized (dataLock){
+                            streamClosed = true;
+                            dataLock.notifyAll();
+                            return;
+                        }
+                    }
+
+                    byte[] actual = new byte[actualBytes];
+                    System.arraycopy(buffer, 0, actual, 0, actualBytes);
+                    data = actual;
+                }
+                catch (IOException ioe) {
+                    synchronized (dataLock) {
+                        threadCrashed = true;
+                        threadException = ioe; // TODO: Proper wrapping here.
+                        dataLock.notifyAll();
+                        return;
+                    }
+                }
             }
         }
     }
