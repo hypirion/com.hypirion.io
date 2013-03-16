@@ -3,14 +3,14 @@ package com.hypirion.io;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.io.Writer;
+import java.io.Reader;
 
 public class Pipe {
 
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
     private final Thread pumper;
-    private final InputStream in;
-    private final OutputStream out;
     private final Object lock;
     private volatile boolean currentlyRunning, stopped;
 
@@ -19,17 +19,29 @@ public class Pipe {
     }
 
     public Pipe(InputStream in, OutputStream out, int bufsize) {
-        this.in = in;
-        this.out = out;
-        Runnable pt = new PipeOutputStream(bufsize);
-        pumper = new Thread(pt);
-        pumper.setName(String.format("PipeThread %s %s", in.hashCode(),
-                                           out.hashCode()));
-        pumper.setDaemon(true);
-        pumper.start();
+        Runnable pt = new PipeOutputStream(in, out, bufsize);
         lock = new Object();
         currentlyRunning = false;
         stopped = false;
+        pumper = new Thread(pt);
+        pumper.setName(String.format("PipeThread %d", this.hashCode()));
+        pumper.setDaemon(true);
+        pumper.start();
+    }
+
+    public Pipe(Reader in, Writer out) {
+        this(in, out, DEFAULT_BUFFER_SIZE);
+    }
+
+    public Pipe(Reader in, Writer out, int bufsize) {
+        Runnable pt = new PipeWriter(in, out, bufsize);
+        lock = new Object();
+        currentlyRunning = false;
+        stopped = false;
+        pumper = new Thread(pt);
+        pumper.setName(String.format("PipeThread %d", this.hashCode()));
+        pumper.setDaemon(true);
+        pumper.start();
     }
 
     public void join() throws InterruptedException {
@@ -84,9 +96,59 @@ public class Pipe {
 
     private class PipeOutputStream implements Runnable {
         private final byte[] data;
+        private final InputStream in;
+        private final OutputStream out;
 
-        public PipeOutputStream(int bufsize) {
+        public PipeOutputStream(InputStream in, OutputStream out, int bufsize) {
             data = new byte[bufsize];
+            this.in = in;
+            this.out = out;
+        }
+
+        @Override
+        public void run() {
+            try {
+                outer:
+                while (true) {
+                    synchronized (lock) {
+                        while (!currentlyRunning) {
+                            if (stopped) {
+                                break outer;
+                            }
+                            lock.wait();
+                            lock.notify();
+                        }
+                    }
+                    int count = in.read(data);
+                    if (count < 0) {
+                        break;
+                    }
+                    out.write(data, 0, count);
+                }
+            }
+            catch (Exception e) {
+                // Die silently for now.
+            }
+            finally {
+                try {
+                    out.close();
+                }
+                catch (IOException ioe) {
+                    ioe.printStackTrace(); // Well yeah
+                }
+            }
+        }
+    }
+
+    private class PipeWriter implements Runnable {
+        private final char[] data;
+        private final Reader in;
+        private final Writer out;
+
+        public PipeWriter(Reader in, Writer out, int bufsize) {
+            data = new char[bufsize];
+            this.in = in;
+            this.out = out;
         }
 
         @Override
