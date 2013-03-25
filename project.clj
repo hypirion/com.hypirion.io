@@ -1,4 +1,4 @@
-(defproject com.hypirion/io "0.2.0"
+(defproject com.hypirion/io "0.3.0-SNAPSHOT"
   :description "I/O classes in Java for those with specific needs."
   :url "https://github.com/hyPiRion/com.hypirion.io"
   :license {:name "Eclipse Public License"
