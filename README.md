@@ -13,6 +13,25 @@ For Clojure, this can be done through
 [com.hypirion/io "0.2.0"]
 ```
 
+or, for Maven:
+
+```
+<dependency>
+  <groupId>com.hypirion</groupId>
+  <artifactId>io</artifactId>
+  <version>0.2.0</version>
+</dependency>
+```
+
+also ensure that Clojars is added to your repositories:
+
+```
+<repository>
+  <id>clojars</id>
+  <url>http://clojars.org/repo/</url>
+</repository>
+```
+
 ## License
 
 Copyright © 2013 Jean Niklas L'orange
