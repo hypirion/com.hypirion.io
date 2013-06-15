@@ -23,7 +23,7 @@ import java.lang.reflect.Field;
 
 public class ConsoleUtils {
 
-    public static boolean setEcho(boolean on) throws Exception {
+    public static synchronized boolean setEcho(boolean on) throws Exception {
         Class params[] = new Class[1];
         params[0] = Boolean.TYPE;
         Method echo = Console.class.getDeclaredMethod("echo", params);
