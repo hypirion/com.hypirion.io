@@ -13,17 +13,48 @@
 
 package com.hypirion.io;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.InputStreamReader;
 import java.io.Console;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
-public class ConsoleUtils {
+/**
+ * The ConsoleUtils class is a static collection of methods used to modify or
+ * use the console in rather unconventional ways. It is mainly a way to set on
+ * and off echoing in the console, either manually or through password reading
+ * from an arbitrary InputStream.
+ *
+ * @author Jean Niklas L'orange
+ * @see java.io.Console
+ * @since <code>com.hypirion.io 0.3.0</code>
+ */
 
-    public static synchronized boolean setEcho(boolean on) throws Exception {
+public final class ConsoleUtils {
+
+    /**
+     * A static method which peeks into the {@link java.io.Console} class and
+     * manually turns on or off echoing in the given console.
+     *
+     * @param on whether to set echoing on or off.
+     *
+     * @exception NoSuchMethodException if Java's own console class have no
+     * private method named "echo".
+     * @exception NoSuchFieldException if Java's own console class have no
+     * private field named "echoOff".
+     * @exception InvocationTargetException if Java's own console class have a
+     * private method named "echo", but that this method tries to invoke that
+     * method erroneously.
+     * @exception IllegalAccessException if the access restrictions prohibits
+     * this method from modifying and using private methods in Java's own
+     * console class.
+     */
+    public static synchronized boolean setEcho(boolean on)
+        throws NoSuchMethodException, IllegalAccessException, NoSuchFieldException, InvocationTargetException {
         Class params[] = new Class[1];
         params[0] = Boolean.TYPE;
         Method echo = Console.class.getDeclaredMethod("echo", params);
@@ -35,7 +66,28 @@ public class ConsoleUtils {
         return res;
     }
     
-    public static char[] readPassword(InputStream is) throws Exception {
+    /**
+     * A static method which will read from a given InputStream while it turns
+     * echo off in the JVM console. Works just as {@link
+     * java.io.Console#readPassword}.
+     *
+     * @param is the InputStream to read from.
+     *
+     * @exception NoSuchMethodException if Java's own console class have no
+     * private method named "echo".
+     * @exception NoSuchFieldException if Java's own console class have no
+     * private field named "echoOff".
+     * @exception InvocationTargetException if Java's own console class have a
+     * private method named "echo", but that this method tries to invoke that
+     * method erroneously.
+     * @exception IllegalAccessException if the access restrictions prohibits
+     * {@link #setEcho(boolean)} from modifying and using private methods in
+     * Java's own console class.
+     * @exception IOException if the given <code>InputStream</code> throws an
+     * <code>IOException</code>.
+     */
+    public static char[] readPassword(InputStream is) throws
+        NoSuchMethodException, IllegalAccessException, NoSuchFieldException, InvocationTargetException, IOException {
         try {
             synchronized(is) {
                 setEcho(false);
