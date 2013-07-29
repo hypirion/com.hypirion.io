@@ -47,9 +47,9 @@ public class SignalInterceptor {
      * @param signame the POSIX signal name with <code>SIG</code> omitted.
      * @param fn the <code>Callable</code> to call. The <code>Callable</code>
      * should return either <code>true</code> or <code>false</code>.
-     * @exception SignalInterceptorException if there are no signal with the
-     * name <code>signame</code>, or if the JVM doesn't implement the most
-     * common JVM signal handling facilities.
+     * @exception SignalInterceptorException if there is no signal with the name
+     * <code>signame</code>, or if the JVM doesn't implement the most common JVM
+     * signal handling facilities.
      */
     public static void register(String signame, Callable fn)
         throws SignalInterceptorException {

@@ -27,7 +27,7 @@ import java.io.IOException;
  * stopped or the input source is empty. When the input source has been closed,
  * or the pipe has been stopped, a ClosingPipe will close the output source
  * afterwards.
- *
+ * <p>
  * Common usage of pipes includes asynchronous zipping of data from two data
  * sources, redirecting output and input to subprocesses and for loggers you
  * want to just pipe from and input source.

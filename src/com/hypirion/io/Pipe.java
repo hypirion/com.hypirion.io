@@ -24,7 +24,7 @@ import java.io.Reader;
  * writer: The pipe, once started, will asynchronously redirect all data
  * received from the input source to the output source until it is paused,
  * stopped or the input source is empty.
- *
+ * <p>
  * Common usage of pipes includes asynchronous zipping of data from two data
  * sources, redirecting output and input to subprocesses and for loggers you
  * want to just pipe from and input source.

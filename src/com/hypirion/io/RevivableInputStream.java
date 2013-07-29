@@ -22,7 +22,7 @@ import java.io.InterruptedIOException;
  * stream. Its primary feature is that it allows to "kill" blocking
  * <code>.read</code> calls by calling <code>.kill</code>. Reading from the
  * stream can be resumed by calling <code>.resurrect</code>.
- *
+ * <p>
  * The common use for this is to avoid closing an input stream, while still be
  * able to cancel a blocking <code>.read</code> where you must use an input
  * stream. This is useful if you need to send a message to the thread which
@@ -91,7 +91,7 @@ public class RevivableInputStream extends InputStream {
      * stream.
      *
      * @exception IOException if the underlying <code>InputStream</code> throws
-     * an <code>IOEXception</code>.
+     * an <code>IOException</code>.
      */
     public synchronized void close() throws IOException {
         synchronized (dataLock) {
