@@ -13,10 +13,29 @@
 
 package com.hypirion.io;
 
+/**
+ * <code>SignalInterceptorException</code>s are thrown if the {@link
+ * SignalInterceptor} class is unable to find the signal attempted to intercept,
+ * or if the JVM doesn't implement the most common JVM signal handling
+ * facilities.
+ *
+ * @author Jean Niklas L'orange
+ * @since <code>com.hypirion.io 0.3.0</code>
+ */
+
 public class SignalInterceptorException extends Exception {
 
+    /**
+     * The name of the signal attempted to intercept, with <code>SIG</code>
+     * omitted.
+     */
     public final String signame;
 
+    /**
+     * Creates a new <code>SignalInterceptorException</code> where
+     * <code>signal</code> is the attempted signal to intercept, with
+     * <code>cause</code> as underlying reason for not being able to do so.
+     */
     public SignalInterceptorException(String signal, Throwable cause) {
         super(String.format("Unable to register for SIG%s", signal), cause);
         signame = signal;
