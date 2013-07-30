@@ -1,5 +1,10 @@
 # com.hypirion.io changelog
 
+## 0.3.1
+
+* Compiling the project with `lein javac` will now produce `1.6`-compliant
+  bytecode.
+
 ## 0.3.0 [`docs`][0.3.0-docs] [`tag`][0.3.0-tag]
 
 * Add ConsoleUtils, which makes it possible to manipulate console echoing and
