@@ -1,4 +1,4 @@
-(defproject com.hypirion/io "0.3.0-SNAPSHOT"
+(defproject com.hypirion/io "0.3.0"
   :description "I/O classes in Java for those with specific needs."
   :url "https://github.com/hyPiRion/com.hypirion.io"
   :license {:name "Eclipse Public License"
@@ -8,5 +8,5 @@
   :deploy-branches ["stable"]
   :profiles
   {:dev {:plugins [[lein-shell "0.2.0"]]
-         :aliases {"javadoc" ["shell" "javadoc" "-d" "0.3.0-SNAPSHOT"
+         :aliases {"javadoc" ["shell" "javadoc" "-d" "0.3.0"
                               "-sourcepath" "src/" "com.hypirion.io"]}}})

@@ -10,7 +10,7 @@ Add a dependency to your this in your Clojure/Java/Scala app, and off we go.
 For Clojure, this can be done through
 
 ```clj
-[com.hypirion/io "0.2.0"]
+[com.hypirion/io "0.3.0"]
 ```
 
 or, for Maven:
@@ -19,7 +19,7 @@ or, for Maven:
 <dependency>
   <groupId>com.hypirion</groupId>
   <artifactId>io</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
