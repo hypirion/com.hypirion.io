@@ -1,7 +1,7 @@
 # com.hypirion.io
 
 Java library which contain I/O classes for those with specific needs. For the
-API documentation, see <http://hypirion.github.com/com.hypirion.io/>.
+API documentation, see <http://hypirion.github.com/com.hypirion.io/0.3.0/index.html>.
 
 ## Usage
 
