@@ -46,4 +46,28 @@ public class PipeTest {
         source.close();
         assertEquals(inString, outString);
     }
+
+    /**
+     * Test that multiple InputStreams with random ascii characters will be
+     * completely piped through the pipe, and not close the OutputStream.
+     */
+    @Test(timeout=1000)
+    public void testMultipleStreams() throws Exception {
+        PipedOutputStream sink = new PipedOutputStream();
+        PipedInputStream source = new PipedInputStream(sink);
+        String totalString = "";
+        for (int i = 0; i < 10; i++) {
+            String inString = RandomStringUtils.randomAscii(37);
+            totalString += inString;
+            InputStream inStream = IOUtils.toInputStream(inString);
+            Pipe p = new Pipe(inStream, sink);
+            p.start();
+            p.join();
+            inStream.close();
+        }
+        sink.close();
+        String outString = IOUtils.toString(source);
+        source.close();
+        assertEquals(totalString, outString);
+    }
 }
