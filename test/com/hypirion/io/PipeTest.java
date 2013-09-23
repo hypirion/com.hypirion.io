@@ -16,6 +16,8 @@ package com.hypirion.io;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
+import java.io.StringWriter;
+import java.io.StringReader;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -69,5 +71,22 @@ public class PipeTest {
         String outString = IOUtils.toString(source);
         source.close();
         assertEquals(totalString, outString);
+    }
+
+    /**
+     * Test that basic reader/writer capabilities work as expected.
+     */
+    @Test(timeout=1000)
+    public void testBasicReaderCapabilities() throws Exception {
+        String input = RandomStringUtils.random(37);
+        StringReader rdr = new StringReader(input);
+        StringWriter wrt = new StringWriter();
+        Pipe p = new Pipe(rdr, wrt);
+        p.start();
+        p.join();
+        String output = wrt.toString();
+        rdr.close();
+        wrt.close();
+        assertEquals(input, output);
     }
 }
