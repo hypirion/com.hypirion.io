@@ -54,7 +54,7 @@ public class PipeTest {
      * completely piped through the pipe, and not close the OutputStream.
      */
     @Test(timeout=1000)
-    public void testMultipleStreams() throws Exception {
+    public void testStreamConcatenation() throws Exception {
         PipedOutputStream sink = new PipedOutputStream();
         PipedInputStream source = new PipedInputStream(sink);
         String totalString = "";
@@ -86,6 +86,28 @@ public class PipeTest {
         p.join();
         String output = wrt.toString();
         rdr.close();
+        wrt.close();
+        assertEquals(input, output);
+    }
+
+    /**
+     * Test that reading from multiple readers doesn't change or stop the
+     * writer.
+     */
+    @Test(timeout=1000)
+    public void testReaderConcatenation() throws Exception {
+        String input = "";
+        StringWriter wrt = new StringWriter();
+        for (int i = 0; i < 10; i++) {
+            String thisInput = RandomStringUtils.random(37);
+            input += thisInput;
+            StringReader rdr = new StringReader(thisInput);
+            Pipe p = new Pipe(rdr, wrt);
+            p.start();
+            p.join();
+            rdr.close();
+        }
+        String output = wrt.toString();
         wrt.close();
         assertEquals(input, output);
     }
