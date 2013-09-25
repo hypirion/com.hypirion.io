@@ -13,6 +13,9 @@
 
 package com.hypirion.io;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.Writer;
 import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -110,5 +113,75 @@ public class PipeTest {
         String output = wrt.toString();
         wrt.close();
         assertEquals(input, output);
+    }
+
+    /**
+     * Test that multiple pipes running concurrently won't leave any chars
+     * behind.
+     */
+    @Test(timeout = 2000)
+    public void testConcurrentReaderPiping() throws Exception {
+        final int charCount = 30;
+        final char[] vals = "123456789".toCharArray();
+        final int n = vals.length;
+        Reader[] readers = new Reader[n];
+        // Generate n readers with charCount equal elements in them.
+        for (int i = 0; i < n; i++) {
+            String s = "";
+            for (int j = 0; j < charCount; j++) {
+                s += vals[i];
+            }
+            StringReader sr = new StringReader(s);
+            readers[i] = new SlowReader(sr);
+        }
+        StringWriter wrt = new StringWriter();
+        Pipe[] pipes = new Pipe[n];
+        for (int i = 0; i < n; i++) {
+            pipes[i] = new Pipe(readers[i], wrt);
+        }
+        for (int i = 0; i < n; i++) {
+            pipes[i].start();
+        }
+        for (int i = 0; i < n; i++) {
+            pipes[i].join();
+            readers[i].close();
+        }
+
+        // Count up elements and ensure that we've got the correct amount of
+        // characters of each type.
+        String out = wrt.toString();
+        char[] output = out.toCharArray();
+        wrt.close();
+        for (char v : vals) {
+            int sum = 0;
+            for (char c : output) {
+                if (c == v) {
+                    sum++;
+                }
+            }
+            assertEquals(charCount, sum);
+        }
+    }
+
+    static class SlowReader extends Reader {
+        Reader r;
+
+        public SlowReader(Reader r) {
+            this.r = r;
+        }
+
+        @Override
+        synchronized public void close() throws IOException {
+            r.close();
+        }
+
+        @Override
+        synchronized public int read(char[] cbuf, int off, int len)
+            throws IOException {
+            try {
+                Thread.yield();
+            } catch (Exception e) {}
+            return r.read(cbuf, off, 1);
+        }
     }
 }
