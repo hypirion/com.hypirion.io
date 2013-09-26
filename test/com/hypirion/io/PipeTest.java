@@ -78,7 +78,7 @@ public class PipeTest {
      */
     @Test(timeout=1000)
     public void testBasicReaderCapabilities() throws Exception {
-        String input = RandomStringUtils.random(37);
+        String input = RandomStringUtils.random(3708);
         StringReader rdr = new StringReader(input);
         StringWriter wrt = new StringWriter();
         Pipe p = new Pipe(rdr, wrt);
@@ -99,7 +99,7 @@ public class PipeTest {
         String input = "";
         StringWriter wrt = new StringWriter();
         for (int i = 0; i < 10; i++) {
-            String thisInput = RandomStringUtils.random(37);
+            String thisInput = RandomStringUtils.random(3708);
             input += thisInput;
             StringReader rdr = new StringReader(thisInput);
             Pipe p = new Pipe(rdr, wrt);
@@ -116,7 +116,7 @@ public class PipeTest {
      * Test that multiple pipes running concurrently won't leave any chars
      * behind.
      */
-    @Test(timeout = 2000)
+    @Test(timeout = 1000)
     public void testConcurrentReaderPiping() throws Exception {
         final int charCount = 30;
         final char[] vals = "123456789".toCharArray();
