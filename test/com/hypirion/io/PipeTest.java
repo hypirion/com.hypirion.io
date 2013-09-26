@@ -14,11 +14,12 @@
 package com.hypirion.io;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.StringWriter;
 import java.io.StringReader;
 
@@ -38,18 +39,16 @@ public class PipeTest {
      */
     @Test(timeout=1000)
     public void testBasicStreamCapabilities() throws Exception {
-        PipedOutputStream sink = new PipedOutputStream();
-        PipedInputStream source = new PipedInputStream(sink);
-        String inString = RandomStringUtils.randomAscii(37);
-        InputStream inStream = IOUtils.toInputStream(inString);
-        Pipe p = new Pipe(inStream, sink);
+        String input = RandomStringUtils.random(3708);
+        InputStream in = IOUtils.toInputStream(input, "UTF-8");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Pipe p = new Pipe(in, out);
         p.start();
         p.join();
-        inStream.close();
-        sink.close();
-        String outString = IOUtils.toString(source);
-        source.close();
-        assertEquals(inString, outString);
+        in.close();
+        String output = out.toString("UTF-8");
+        out.close();
+        assertEquals(input, output);
     }
 
     /**
@@ -58,22 +57,20 @@ public class PipeTest {
      */
     @Test(timeout=1000)
     public void testStreamConcatenation() throws Exception {
-        PipedOutputStream sink = new PipedOutputStream();
-        PipedInputStream source = new PipedInputStream(sink);
-        String totalString = "";
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        String input = "";
         for (int i = 0; i < 10; i++) {
-            String inString = RandomStringUtils.randomAscii(37);
-            totalString += inString;
-            InputStream inStream = IOUtils.toInputStream(inString);
-            Pipe p = new Pipe(inStream, sink);
+            String inString = RandomStringUtils.random(3708);
+            input += inString;
+            InputStream in = IOUtils.toInputStream(inString, "UTF-8");
+            Pipe p = new Pipe(in, out);
             p.start();
             p.join();
-            inStream.close();
+            in.close();
         }
-        sink.close();
-        String outString = IOUtils.toString(source);
-        source.close();
-        assertEquals(totalString, outString);
+        String output = out.toString("UTF-8");
+        out.close();
+        assertEquals(input, output);
     }
 
     /**
