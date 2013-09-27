@@ -52,6 +52,25 @@ public class ClosingPipeTest {
         assertTrue(wrapper.isClosed);
     }
 
+    /**
+     * Tests that a ClosingPipe closes a Writer after the Reader is properly
+     * consumed.
+     */
+    @Test(timeout=1000)
+    public void testBasicWriteClosingCapabilities() throws Exception {
+        String input = RandomStringUtils.random(4023);
+        Reader in = new StringReader(input);
+        StringWriter out = new StringWriter();
+        CloseCheckingReader wrapper = new CloseCheckingReader(out);
+        Pipe p = new ClosingPipe(in, wrapper);
+        p.start();
+        p.join();
+        in.close();
+        String output = out.toString();
+        assertEquals(input, output);
+        assertTrue(wrapper.isClosed);
+    }
+
     public static class CloseCheckingOutputStream extends OutputStream {
         volatile boolean isClosed;
         final OutputStream out;
@@ -67,6 +86,29 @@ public class ClosingPipeTest {
         synchronized public void close() throws IOException {
             out.close();
             isClosed = true;
+        }
+    }
+
+    public static class CloseCheckingReader extends Writer {
+        volatile boolean isClosed;
+        final Writer out;
+
+        public CloseCheckingReader(Writer out) {
+            this.out = out;
+        }
+
+        synchronized public void close() throws IOException {
+            out.close();
+            isClosed = true;
+        }
+
+        synchronized public void flush() throws IOException {
+            out.flush();
+        }
+
+        synchronized public void write(char[] cbuf, int off, int len)
+            throws IOException {
+            out.write(cbuf, off, len);
         }
     }
 }
