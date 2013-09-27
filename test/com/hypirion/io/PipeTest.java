@@ -74,6 +74,56 @@ public class PipeTest {
     }
 
     /**
+     * Test that multiple pipes running concurrently won't leave any chars
+     * behind.
+     */
+    @Test(timeout = 1000)
+    public void testConcurrentStreamPiping() throws Exception {
+        final int charCount = 30;
+        final char[] vals = "123456789".toCharArray();
+        final int n = vals.length;
+        InputStream[] istreams = new InputStream[n];
+
+        // Generate n istreams with charCount equal elements in them.
+        for (int i = 0; i < n; i++) {
+            String s = "";
+            for (int j = 0; j < charCount; j++) {
+                s += vals[i];
+            }
+            InputStream is = IOUtils.toInputStream(s, "UTF-8");
+            istreams[i] = new SlowInputStream(is);
+        }
+        ByteArrayOutputStream wrt = new ByteArrayOutputStream();
+        Pipe[] pipes = new Pipe[n];
+        for (int i = 0; i < n; i++) {
+            pipes[i] = new Pipe(istreams[i], wrt);
+        }
+        for (int i = 0; i < n; i++) {
+            pipes[i].start();
+        }
+        for (int i = 0; i < n; i++) {
+            pipes[i].join();
+            istreams[i].close();
+        }
+
+        // Count up elements and ensure that we've got the correct amount of
+        // characters of each type.
+        String out = wrt.toString("UTF-8");
+        char[] output = out.toCharArray();
+        wrt.close();
+        for (char v : vals) {
+            int sum = 0;
+            for (char c : output) {
+                if (c == v) {
+                    sum++;
+                }
+            }
+            assertEquals(charCount, sum);
+        }
+    }
+
+
+    /**
      * Test that basic reader/writer capabilities work as expected.
      */
     @Test(timeout=1000)
@@ -159,6 +209,37 @@ public class PipeTest {
             assertEquals(charCount, sum);
         }
     }
+
+    static class SlowInputStream extends InputStream {
+        InputStream is;
+
+        public SlowInputStream(InputStream is) {
+            this.is = is;
+        }
+
+        @Override
+        synchronized public void close() throws IOException {
+            is.close();
+        }
+
+        @Override
+        synchronized public int read(byte[] bbuf, int off, int len)
+            throws IOException {
+            try {
+                Thread.yield();
+            } catch (Exception e) {}
+            return is.read(bbuf, off, 1);
+        }
+
+        @Override
+        synchronized public int read() throws IOException {
+            try {
+                Thread.yield();
+            } catch (Exception e) {}
+            return is.read();
+        }
+    }
+
 
     static class SlowReader extends Reader {
         Reader r;
