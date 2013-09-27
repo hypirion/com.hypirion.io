@@ -211,7 +211,7 @@ public class PipeTest {
     }
 
     static class SlowInputStream extends InputStream {
-        InputStream is;
+        final InputStream is;
 
         public SlowInputStream(InputStream is) {
             this.is = is;
@@ -242,7 +242,7 @@ public class PipeTest {
 
 
     static class SlowReader extends Reader {
-        Reader r;
+        final Reader r;
 
         public SlowReader(Reader r) {
             this.r = r;
