@@ -7,6 +7,7 @@
   :java-source-paths ["src"]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :deploy-branches ["stable"]
+  :aliases {"test" "junit"}
   :profiles
   {:dev {:dependencies [[junit/junit "4.11"]
                         [org.apache.commons/commons-lang3 "3.1"]
