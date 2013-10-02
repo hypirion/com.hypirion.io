@@ -49,7 +49,8 @@ public class ClosingPipeTest {
         in.close();
         String output = out.toString("UTF-8");
         assertEquals(input, output);
-        assertTrue(wrapper.isClosed);
+        assertTrue(String.format("Failed to close for %s", input),
+                   wrapper.isClosed);
     }
 
     /**
@@ -68,7 +69,8 @@ public class ClosingPipeTest {
         in.close();
         String output = out.toString();
         assertEquals(input, output);
-        assertTrue(wrapper.isClosed);
+        assertTrue(String.format("Failed to close for %s", input),
+                   wrapper.isClosed);
     }
 
     public static class CloseCheckingOutputStream extends OutputStream {
