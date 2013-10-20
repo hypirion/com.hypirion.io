@@ -7,14 +7,13 @@
   :java-source-paths ["src"]
   :javac-options ["-target" "1.6" "-source" "1.6" "-Xlint:-options"]
   :deploy-branches ["stable"]
-  :aliases {"test" "junit"}
-  :profiles
-  {:dev {:dependencies [[junit/junit "4.11"]
-                        [org.apache.commons/commons-lang3 "3.1"]
-                        [commons-io/commons-io "2.4"]]
-         :plugins [[lein-shell "0.2.0"]
-                   [lein-junit "1.1.3"]]
-         :junit ["test"]
-         :java-source-paths ["test"]
-         :aliases {"javadoc" ["shell" "javadoc" "-d" "0.4.0-SNAPSHOT"
-                              "-sourcepath" "src/" "com.hypirion.io"]}}})
+  :aliases {"test" "junit"
+            "javadoc" ["shell" "javadoc" "-d" "0.4.0-SNAPSHOT"
+                       "-sourcepath" "src/" "com.hypirion.io"]}
+  :plugins [[lein-shell "0.2.0"]
+            [lein-junit "1.1.3"]]
+  :profiles {:dev {:java-source-paths ["test"]
+                   :junit ["test"]
+                   :dependencies [[junit/junit "4.11"]
+                                   [org.apache.commons/commons-lang3 "3.1"]
+                                   [commons-io/commons-io "2.4"]]}})
