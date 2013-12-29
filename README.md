@@ -1,7 +1,11 @@
 # com.hypirion.io
 
 Java library which contain I/O classes for those with specific needs. For the
-API documentation, see <http://hypirion.github.com/com.hypirion.io/0.3.0/index.html>.
+API documentation, see
+<http://hypirion.github.com/com.hypirion.io/0.3.0/index.html>.
+
+This library is stable, and will mostly not change much. Bugs will be highly
+prioritised, and sensible feature requests may be added in the library.
 
 ## Usage
 
