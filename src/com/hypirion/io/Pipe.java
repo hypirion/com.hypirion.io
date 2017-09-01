@@ -138,7 +138,7 @@ public class Pipe {
      * Pauses this pipe. Will block until the current blocking read by this pipe
      * has finished, regardless of whether this pipe has been stopped or not. If
      * this pipe has already been paused or stopped, and there is no blocking
-     * read waiting, will immediatly return.
+     * read waiting, will immediately return.
      *
      * @exception InterruptedException if this thread is interrupted while
      * waiting.
